@@ -1,17 +1,38 @@
 cmake_minimum_required(VERSION 3.21)
-project(IceCavernGameEngine)
+project(IceCavernEngine)
 
 # Use C++ 20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 
-# vcpkg packages
+# Library
+add_library(${PROJECT_NAME}
+    src/ic_app.cpp
+)
+
+target_include_directories(${PROJECT_NAME}
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+)
+
+# Platform Variables
+option(IC_RENDERER_VULKAN "Make Vulkan Renderer available" ON)
+
+# Tracks which libraries we need to link, depending on the options above.
 find_package(glfw3 REQUIRED)
 find_package(glm REQUIRED)
-find_package(Vulkan REQUIRED)
 
-SET(GLM_TEST_ENABLE OFF CACHE BOOL "GLM Build unit tests")
+set(GLM_TEST_ENABLE OFF CACHE BOOL "GLM Build unit tests")
 
-# Executable
-add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} glfw ${GLFW_LIBRARIES} Vulkan::Vulkan glm::glm)
+set(LIBS, glfw ${GLFW_LIBRARIES} glm::glm)
+
+if (IC_RENDERER_VULKAN)
+    find_package(Vulkan REQUIRED)
+
+    add_compile_definitions(IC_RENDERER_VULKAN)
+    set(LIBS ${LIBS} Vulkan::Vulkan)
+endif()
+
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
